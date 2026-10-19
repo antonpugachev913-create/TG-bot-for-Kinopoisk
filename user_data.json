@@ -1,9 +1,0 @@
-{
-  "users": {
-    "123456789": {
-      "favorite_genre": "Fantasy",
-      "favorite_movie": "The Lord of the Rings",
-      "preferences": ["Adventure", "Action"]
-    }
-  }
-}

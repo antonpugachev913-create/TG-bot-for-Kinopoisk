@@ -2,12 +2,9 @@ import telebot
 import requests
 from telebot import TeleBot
 
-# Создаем бота с вашим токеном
-API_TOKEN = "7FZXT7H-EN2M86X-KD9XQQR-V3C2BGE"
-# URL API Кинопоиска
+API_TOKEN = "JA9EH58-VEM4V3C-J4H4SZ6-XDZW9GH"
 API_URL= "https://api.kinopoisk.dev/v1.4/movie/search"
-# Создание экземпляра бота
-bot = telebot.TeleBot("8380664049:AAFXJrIgxqmYj_TTklKJrPJyEb8snkdXw8o")
+bot = telebot.TeleBot("8351519692:AAGxyTMoBCAPeZPgjquo-UlUROkuduzDtMc")
 
 # Обработчик команды /start
 @bot.message_handler(commands=["start"])
@@ -36,49 +33,54 @@ def info_command(message):
         """
         Функция обрабатывает текстовые сообщения, предполагая, что пользователь ввел название фильма.
         """
-        # Получаем текст сообщения и убираем лишние пробелы
         film_name = message.text.strip()
+
+        # СТРОГАЯ ЗАЩИТА: Если текст совпадает с пунктами меню, мы его НЕ отправляем в Кинопоиск
+        if film_name.startswith("/") or "Рекомендации" in film_name or "Описание" in film_name:
+            return
+
         # Уведомляем пользователя, что начался поиск
         bot.send_message(message.chat.id, f"🔍 Ищу информацию о фильме: {film_name}...")
 
-
         # Подготовка заголовков для запроса к API Кинопоиска
         headers = {"X-API-KEY": API_TOKEN}
-        print(headers)
         # Параметры запроса
         params = {"page": 1, "limit": 1, "query": film_name}
-        print(params)
-        response = requests.get(API_URL, headers=headers, params=params)
 
-        # Проверяем статус ответа
-        if response.status_code == 200:
-            print("ok")
-            # Обработка ответа
-            data = response.json()
-            docs = data.get("docs", [])
+        try:
+            response = requests.get(API_URL, headers=headers, params=params)
 
-            if docs:
-                film = docs[0]
-                film_info = (
-                    f"🎬 {film.get('name')}\n"
-                    f"📅 Год: {film.get('year')}\n"
-                    f"⭐ Рейтинг: {film.get('rating', {}).get('kp')}\n"
-                    f"📖 Описание: {film.get('description')}\n"
-                    f"🎭 Жанр: {', '.join(genre['name'] for genre in film.get('genres', []))}\n"
-                    f"🌍 Страна: {', '.join(country['name'] for country in film.get('countries', []))}\n"
-                )
-                bot.send_message(message.chat.id, film_info, parse_mode="HTML")
+            # Проверяем статус ответа
+            if response.status_code == 200:
+                data = response.json()
+                docs = data.get("docs", [])
+
+                if docs:
+                    film = docs[0]
+                    film_info = (
+                        f"🎬 {film.get('name')}\n"
+                        f"📅 Год: {film.get('year')}\n"
+                        f"⭐ Рейтинг: {film.get('rating', {}).get('kp')}\n"
+                        f"📖 Описание: {film.get('description')}\n"
+                        f"🎭 Жанр: {', '.join(genre['name'] for genre in film.get('genres', []))}\n"
+                        f"🌍 Страна: {', '.join(country['name'] for country in film.get('countries', []))}\n"
+                    )
+                    bot.send_message(message.chat.id, film_info, parse_mode="HTML")
+                else:
+                    bot.send_message(
+                        message.chat.id,
+                        "😞 К сожалению, я не нашел информации о фильме. Попробуй уточнить название."
+                    )
             else:
+                # Выводим код ошибки в чат, чтобы точно знать, что не так с токеном
                 bot.send_message(
                     message.chat.id,
-                    "😞 К сожалению, я не нашел информации о фильме. Попробуй уточнить название."
+                    f"⚠️ Ошибка при запросе к API. Код ответа сервера: {response.status_code}. Попробуй позже."
                 )
-        else:
-            bot.send_message(
-                message.chat.id,
-                f"⚠️ Ошибка при запросе к API. Попробуй позже. "
+        except Exception as e:
+            print(f"Ошибка: {e}")
 
-            )
+
 # Запуск бота
 # Состояния для команды /set_preferences
 STATE_WAITING_FOR_GENRE = 1
