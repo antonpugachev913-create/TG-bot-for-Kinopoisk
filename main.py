@@ -1,10 +1,13 @@
 import telebot
 import requests
-from telebot import TeleBot
+import os
+from dotenv import load_dotenv
 
-API_TOKEN = "JA9EH58-VEM4V3C-J4H4SZ6-XDZW9GH"
+load_dotenv()
+
+API_TOKEN = os.getenv("API_TOKEN")
 API_URL= "https://api.kinopoisk.dev/v1.4/movie/search"
-bot = telebot.TeleBot("8351519692:AAGxyTMoBCAPeZPgjquo-UlUROkuduzDtMc")
+bot = telebot.TeleBot(os.getenv("BOT_TOKEN"))
 
 # Обработчик команды /start
 @bot.message_handler(commands=["start"])
